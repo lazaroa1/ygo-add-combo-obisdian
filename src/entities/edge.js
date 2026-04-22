@@ -1,17 +1,17 @@
 const { generateUniqueId } = require("../utils/idGenerator");
 
 /**
- * Factory para criar conexões/arestas entre nós
- * Responsabilidade: encapsular estrutura de edge
+ * Factory for creating connections/edges between nodes
+ * Responsibility: encapsulate edge structure
  */
 
 /**
- * Cria uma conexão entre dois nós
- * @param {Object} nodeOrigem - Nó de origem { id, ... }
- * @param {Object} nodeDestino - Nó de destino { id, label, ... }
- * @param {string} sideDe - Lado de saída do nó origem (top/bottom/left/right)
- * @param {string} sidePara - Lado de entrada do nó destino
- * @returns {Object} Objeto da aresta/conexão
+ * Create a connection between two nodes
+ * @param {Object} nodeOrigem - Source node { id, ... }
+ * @param {Object} nodeDestino - Destination node { id, label, ... }
+ * @param {string} sideDe - Output side of source node (top/bottom/left/right)
+ * @param {string} sidePara - Input side of destination node
+ * @returns {Object} Edge/connection object
  */
 function criarConexao(nodeOrigem, nodeDestino, sideDe, sidePara) {
   const conexao = {
@@ -22,7 +22,7 @@ function criarConexao(nodeOrigem, nodeDestino, sideDe, sidePara) {
     toSide: sidePara,
   };
 
-  // Adiciona label apenas se houver
+  // Add label only when present
   if (nodeDestino.label) {
     conexao.label = nodeDestino.label;
   }
@@ -31,11 +31,11 @@ function criarConexao(nodeOrigem, nodeDestino, sideDe, sidePara) {
 }
 
 /**
- * Cria múltiplas conexões entre dois grupos de nós
- * @param {Array<Object>} nodosOrigem - Array de nós de origem
- * @param {Array<Object>} nodosDestino - Array de nós de destino
+ * Create multiple connections between two node groups
+ * @param {Array<Object>} nodosOrigem - Source node array
+ * @param {Array<Object>} nodosDestino - Destination node array
  * @param {Object} sides - { fromSide, toSide }
- * @returns {Array<Object>} Array de arestas criadas
+ * @returns {Array<Object>} Array of created edges
  */
 function criarConexoesEntreListas(nodosOrigem, nodosDestino, sides) {
   const conexoes = [];

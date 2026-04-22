@@ -1,13 +1,13 @@
 const { PATTERNS } = require("../config");
 
 /**
- * Parser de combos em formato textual
- * Responsabilidade: extrair informações estruturadas do input de combo
+ * Combo parser for text format
+ * Responsibility: extract structured information from combo input
  */
 
 /**
- * Extrai nome da carta e ação do texto de uma entidade
- * @param {string} entityStr - String contendo "nome[acao]"
+ * Extract card name and action from an entity string
+ * @param {string} entityStr - String containing "name[action]"
  * @returns {Object} { name, action }
  */
 function extrairNomeEAcao(entityStr) {
@@ -25,10 +25,10 @@ function extrairNomeEAcao(entityStr) {
 }
 
 /**
- * Extrai lista de entidades (cartas) de uma string
- * Suporta separadores: +, |, -
- * @param {string} step - String contendo entidades separadas
- * @returns {Array<string>} Lista de strings de entidades
+ * Extract entity (card) list from a string
+ * Supports separators: +, |, -
+ * @param {string} step - String containing separated entities
+ * @returns {Array<string>} List of entity strings
  */
 function extrairEntidades(step) {
   return step
@@ -38,10 +38,10 @@ function extrairEntidades(step) {
 }
 
 /**
- * Extrai e parseia a mão inicial (Start hand)
- * Formato: "Start hand -> Carta1 | Carta2 | Carta3"
- * @param {string} line - Linha contendo a mão inicial
- * @returns {Array<Object>} Array com [ { name, action } ]
+ * Extract and parse opening hand (Start hand)
+ * Format: "Start hand -> Card1 | Card2 | Card3"
+ * @param {string} line - Line containing the opening hand
+ * @returns {Array<Object>} Array with [ { name, action } ]
  */
 function parseaInicialCombo(line) {
   const partes = line.split("->");
@@ -62,10 +62,10 @@ function parseaInicialCombo(line) {
 }
 
 /**
- * Parseia uma sequência de cartas em um passo
- * Formato: "Carta1[acao1] + Carta2[acao2] -> Carta3[acao3]"
- * @param {string} line - Linha contendo sequência de cartas
- * @returns {Array<Array<Object>>} Array de passos, cada um com array de { name, action }
+ * Parse a card sequence into a step list
+ * Format: "Card1[action1] + Card2[action2] -> Card3[action3]"
+ * @param {string} line - Line containing card sequence
+ * @returns {Array<Array<Object>>} Array of steps, each containing { name, action }
  */
 function parseaSequenciaCombo(line) {
   const etapas = line.split("->").map((s) => s.trim());
@@ -81,26 +81,26 @@ function parseaSequenciaCombo(line) {
 }
 
 /**
- * Verifica se uma linha contém a definição da mão inicial
- * @param {string} line - Linha a verificar
- * @returns {boolean} True se é início de combo
+ * Check whether a line defines opening hand
+ * @param {string} line - Line to check
+ * @returns {boolean} True if combo start
  */
 function ehInicioDoComboo(line) {
   return PATTERNS.handStart.test(line);
 }
 
 /**
- * Alias com nome corrigido para manter semântica clara.
- * @param {string} line - Linha a verificar
- * @returns {boolean} True se é início de combo
+ * Alias with corrected name for clearer semantics.
+ * @param {string} line - Line to check
+ * @returns {boolean} True if combo start
  */
 function ehInicioDoCombo(line) {
   return ehInicioDoComboo(line);
 }
 
 /**
- * Parseia o input de combo completo
- * @param {string} inputText - Texto contendo todas as linhas de combo
+ * Parse full combo input
+ * @param {string} inputText - Text containing all combo lines
  * @returns {Object} { inicial: Array, sequencia: Array<Array<Object>> }
  */
 function parseaComboCompleto(inputText) {

@@ -24,14 +24,14 @@ const {
 } = require("../entities/layoutEngine");
 
 /**
- * Builder do canvas - orquestra todo o processo de geração
- * Responsabilidade: coordenar parser, layout, imagens e persistência
+ * Canvas builder - orchestrates the full generation process
+ * Responsibility: coordinate parser, layout, images, and persistence
  */
 
 /**
- * Carrega dados de canvas existente se disponível
- * @param {string} caminhoArquivo - Path do arquivo canvas
- * @returns {Promise<Object>} Dados do canvas { nodes, edges }
+ * Load existing canvas data if available
+ * @param {string} caminhoArquivo - Canvas file path
+ * @returns {Promise<Object>} Canvas data { nodes, edges }
  */
 async function carregarCanvasExistente(caminhoArquivo) {
   try {
@@ -43,9 +43,9 @@ async function carregarCanvasExistente(caminhoArquivo) {
 }
 
 /**
- * Calcula o Y inicial baseado no canvas existente
- * @param {Object} canvasExistente - Dados do canvas atual
- * @returns {number} Y inicial para novo conteúdo
+ * Calculate starting Y based on existing canvas
+ * @param {Object} canvasExistente - Current canvas data
+ * @returns {number} Starting Y for new content
  */
 function calcularYInicial(canvasExistente) {
   if (canvasExistente.nodes.length === 0) {
@@ -56,11 +56,11 @@ function calcularYInicial(canvasExistente) {
 }
 
 /**
- * Processa nós da mão inicial
- * @param {Array<Object>} nodosIniciais - Cartas da mão inicial
- * @param {number} posX - Posição X inicial
- * @param {number} posY - Posição Y
- * @returns {Array<Object>} Nós criados
+ * Process opening hand nodes
+ * @param {Array<Object>} nodosIniciais - Opening hand cards
+ * @param {number} posX - Initial X position
+ * @param {number} posY - Y position
+ * @returns {Array<Object>} Created nodes
  */
 function processarMaoInicial(nodosIniciais, posX, posY) {
   const nos = [];
@@ -88,12 +88,12 @@ function processarMaoInicial(nodosIniciais, posX, posY) {
 }
 
 /**
- * Processa uma linha de combo gerando nós e conexões
- * Mantém exatamente a semântica do algoritmo original (encadeamento por linha).
- * @param {Array<Array<Object>>} etapasDaLinha - Etapas da linha (split por ->)
- * @param {Array<Object>} nosGlobaisAnteriores - Nós globais anteriores
- * @param {number} posX - Posição X atual
- * @param {number} posY - Posição Y atual
+ * Process one combo line generating nodes and connections
+ * Preserves the exact semantics of the original algorithm (line-by-line chaining).
+ * @param {Array<Array<Object>>} etapasDaLinha - Line steps (split by ->)
+ * @param {Array<Object>} nosGlobaisAnteriores - Previous global nodes
+ * @param {number} posX - Current X position
+ * @param {number} posY - Current Y position
  * @returns {Object} { nos, conexoes, novosGlobaisAnteriores, proxX }
  */
 function processarLinhaCombo(etapasDaLinha, nosGlobaisAnteriores, posX, posY) {
@@ -155,7 +155,7 @@ function processarLinhaCombo(etapasDaLinha, nosGlobaisAnteriores, posX, posY) {
       }
     }
 
-    // Criar conexões entre nós anteriores e atuais
+    // Create connections between previous and current nodes
     if (previousNodes.length > 0 && nosNaEtapa.length > 0) {
       const sides = determinarSidesConexao(previousNodes[0], nosNaEtapa[0]);
       const conexoes = criarConexoesEntreListas(
@@ -182,9 +182,9 @@ function processarLinhaCombo(etapasDaLinha, nosGlobaisAnteriores, posX, posY) {
 }
 
 /**
- * Converte nós internos para nós do canvas com imagens ou texto
- * @param {Array<Object>} nos - Nós internos
- * @returns {Promise<Array<Object>>} Nós do canvas
+ * Convert internal nodes to canvas nodes with image or text
+ * @param {Array<Object>} nos - Internal nodes
+ * @returns {Promise<Array<Object>>} Canvas nodes
  */
 async function converterNosParaCanvas(nos) {
   const nosCanvas = [];
@@ -203,25 +203,25 @@ async function converterNosParaCanvas(nos) {
 }
 
 /**
- * Constrói e persiste o canvas
- * @param {string} textoEntrada - Texto de entrada do combo
- * @param {string} nomeArquivo - Nome do arquivo canvas
- * @param {string} diretorioDestino - Diretório onde salvar
+ * Build and persist the canvas
+ * @param {string} textoEntrada - Combo input text
+ * @param {string} nomeArquivo - Canvas file name
+ * @param {string} diretorioDestino - Destination directory
  */
 async function construirCanvas(textoEntrada, nomeArquivo, diretorioDestino) {
   try {
-    // 1. Carregar canvas existente e calcular posição inicial
+    // 1. Load existing canvas and calculate initial position
     const caminhoArquivo = path.join(diretorioDestino, nomeArquivo);
     const canvasExistente = await carregarCanvasExistente(caminhoArquivo);
     const yInicial = calcularYInicial(canvasExistente);
 
-    // 2. Parsear linhas
+    // 2. Parse lines
     const linhas = textoEntrada
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line);
 
-    // 3. Processar linhas mantendo estado global entre elas
+    // 3. Process lines while keeping shared global state
     const todosOs = [];
     const todasConexoes = [];
     let posX = 0;
@@ -256,15 +256,15 @@ async function construirCanvas(textoEntrada, nomeArquivo, diretorioDestino) {
       posX = proxX;
     }
 
-    // 4. Converter nós para canvas (com imagens)
+    // 4. Convert nodes to canvas format (with images)
     const nosCanvasNovos = await converterNosParaCanvas(todosOs);
     const conexoesCanvasNovas = todasConexoes;
 
-    // 5. Atualizar canvas
+    // 5. Update canvas
     canvasExistente.nodes.push(...nosCanvasNovos);
     canvasExistente.edges.push(...conexoesCanvasNovas);
 
-    // 6. Salvar arquivo
+    // 6. Save file
     await fs.mkdir(diretorioDestino, { recursive: true });
     await fs.writeFile(
       caminhoArquivo,

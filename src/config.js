@@ -1,11 +1,11 @@
 const path = require("path");
 
 /**
- * Configuração centralizada da aplicação
- * Agrupa todas as constantes e paths em um único arquivo
+ * Centralized application configuration
+ * Groups all constants and paths in one file
  */
 
-// Paths do Obsidian Vault
+// Obsidian Vault paths
 const VAULT_ROOT = "G:/Meu Drive/MyMind";
 const VAULT_SUBDIRS = {
   combos: "Yugioh/Decks/Combos",
@@ -16,7 +16,7 @@ const DIRETORIO_CANVAS = path.join(VAULT_ROOT, VAULT_SUBDIRS.combos);
 const DIRETORIO_IMAGENS_ABSOLUTO = path.join(VAULT_ROOT, VAULT_SUBDIRS.images);
 const PASTA_ANEXOS_RELATIVA = VAULT_SUBDIRS.images;
 
-// Dimensões de nós no canvas
+// Canvas node dimensions
 const NODE_DIMENSIONS = {
   width: 274,
   height: 400,
@@ -24,26 +24,26 @@ const NODE_DIMENSIONS = {
   textHeight: 60,
 };
 
-// Espaçamento no layout (eixos X e Y)
+// Layout spacing (X and Y axes)
 const LAYOUT_SPACING = {
-  baseHorizontal: 440, // Espaço horizontal padrão entre nós (NS/SP um pouco mais soltos)
-  largeHorizontal: 600, // Espaço para ações que ocupam mais espaço (ACT EFF, GY EFF)
-  verticalBranch: 700, // Espaço vertical para ramificações (search, material)
-  handNodeSpacing: 274, // Espaço entre nós da mão inicial
-  handNodePadding: 150, // Espaçamento após nós da mão
-  fileBottomOffset: 800, // Offset de Y para novo arquivo
+  baseHorizontal: 440, // Default horizontal spacing between nodes (NS/SP slightly looser)
+  largeHorizontal: 600, // Extra spacing for actions that need more room (ACT EFF, GY EFF)
+  verticalBranch: 700, // Vertical spacing for branches (search, material)
+  handNodeSpacing: 274, // Spacing between opening hand nodes
+  handNodePadding: 150, // Extra spacing after opening hand
+  fileBottomOffset: 800, // Y offset for appending a new combo to an existing file
 };
 
-// Ações que modificam o layout horizontal
+// Actions that change horizontal layout spacing
 const LARGE_HORIZONTAL_ACTIONS = ["act eff", "gy eff"];
 
-// Ações que criam ramificações (não seguem a sequência linear)
+// Actions that create branches (do not follow linear flow)
 const BRANCH_ACTION_PATTERNS = {
   search: ["search", "add", "busca"],
   material: ["material"],
 };
 
-// Padrões de parsing
+// Parsing patterns
 const PATTERNS = {
   handStart: /^start hand/i,
   entityExtractor: /([^\[\-\>\|]+)(?:\[([^\]]+)\])?/g,

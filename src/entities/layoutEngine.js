@@ -5,43 +5,39 @@ const {
 } = require("../config");
 
 /**
- * Engine de layout para posicionamento de nós no canvas
- * Responsabilidade: calcular coordenadas X/Y para cada nó
+ * Layout engine for canvas node positioning
+ * Responsibility: calculate X/Y coordinates for each node
  */
 
 /**
- * Verifica se uma ação é classificada como "ramificação"
- * (não segue a sequência linear normal)
- * @param {string} action - Ação a verificar
+ * Check whether an action is classified as a "branch"
+ * (does not follow normal linear sequence)
+ * @param {string} action - Action to check
  * @returns {Object} { isBranch: boolean, branchType: 'search'|'material'|null }
  */
 function identificaTipoDeBranch(action) {
-  if (
-    BRANCH_ACTION_PATTERNS.search.some((a) => action.includes(a))
-  ) {
+  if (BRANCH_ACTION_PATTERNS.search.some((a) => action.includes(a))) {
     return { isBranch: true, branchType: "search" };
   }
-  if (
-    BRANCH_ACTION_PATTERNS.material.some((a) => action.includes(a))
-  ) {
+  if (BRANCH_ACTION_PATTERNS.material.some((a) => action.includes(a))) {
     return { isBranch: true, branchType: "material" };
   }
   return { isBranch: false, branchType: null };
 }
 
 /**
- * Verifica se uma ação deve ocupar mais espaço horizontal
- * @param {string} action - Ação a verificar
- * @returns {boolean} True se requer espaço grande
+ * Check whether an action should use more horizontal space
+ * @param {string} action - Action to check
+ * @returns {boolean} True if larger spacing is required
  */
 function ehAcaoComGrandeEspacoHorizontal(action) {
   return LARGE_HORIZONTAL_ACTIONS.some((a) => action.includes(a));
 }
 
 /**
- * Calcula posição para um nó de ramificação "search"
- * Search nodes ficam acima (Y menor) do nó pai
- * @param {Object} parentNode - Nó pai { x, y }
+ * Calculate position for a "search" branch node
+ * Search nodes are placed above (lower Y) the parent node
+ * @param {Object} parentNode - Parent node { x, y }
  * @returns {Object} { x, y }
  */
 function calcularPosicaoSearchNode(parentNode) {
@@ -52,14 +48,18 @@ function calcularPosicaoSearchNode(parentNode) {
 }
 
 /**
- * Calcula posição para um nó de ramificação "material"
- * Material nodes ficam abaixo (Y maior) do nó pai, espaçados horizontalmente
- * @param {Object} parentNode - Nó pai { x, y }
- * @param {number} materialIndex - Índice deste material na lista
- * @param {number} totalMaterials - Total de materials neste passo
+ * Calculate position for a "material" branch node
+ * Material nodes are placed below (higher Y) the parent node, spaced horizontally
+ * @param {Object} parentNode - Parent node { x, y }
+ * @param {number} materialIndex - Index of this material in the list
+ * @param {number} totalMaterials - Total material nodes in this step
  * @returns {Object} { x, y }
  */
-function calcularPosicaoMaterialNode(parentNode, materialIndex, totalMaterials) {
+function calcularPosicaoMaterialNode(
+  parentNode,
+  materialIndex,
+  totalMaterials,
+) {
   const offset = materialIndex * 320 - (totalMaterials - 1) * 160;
   return {
     x: parentNode.x + offset,
@@ -68,19 +68,24 @@ function calcularPosicaoMaterialNode(parentNode, materialIndex, totalMaterials) 
 }
 
 /**
- * Calcula posição para um nó normal (sequência linear)
- * @param {number} currentX - X atual no layout
- * @param {number} currentY - Y atual no layout
- * @param {string} action - Ação do nó
- * @param {boolean} hasPreviousNode - Indica se existe nó anterior na sequência
+ * Calculate position for a regular node (linear sequence)
+ * @param {number} currentX - Current X in layout
+ * @param {number} currentY - Current Y in layout
+ * @param {string} action - Node action
+ * @param {boolean} hasPreviousNode - Whether a previous node exists in sequence
  * @returns {Object} { x, y, nextX }
  */
-function calcularPosicaoNormalNode(currentX, currentY, action, hasPreviousNode = true) {
+function calcularPosicaoNormalNode(
+  currentX,
+  currentY,
+  action,
+  hasPreviousNode = true,
+) {
   let nextX = currentX;
   let x = currentX;
 
-  // Replica a regra do algoritmo original:
-  // quando há nó anterior e a ação é "grande", aplica deslocamento extra ANTES do nó atual.
+  // Mirrors the original algorithm rule:
+  // if there is a previous node and the action is "large", apply extra offset BEFORE current node.
   if (hasPreviousNode && ehAcaoComGrandeEspacoHorizontal(action)) {
     x += LAYOUT_SPACING.largeHorizontal - LAYOUT_SPACING.baseHorizontal;
   }
@@ -95,11 +100,11 @@ function calcularPosicaoNormalNode(currentX, currentY, action, hasPreviousNode =
 }
 
 /**
- * Calcula posição para um nó da mão inicial
- * Mão inicial tem espaçamento especial
- * @param {number} currentX - X atual
- * @param {number} currentY - Y atual
- * @param {number} index - Índice da carta na mão
+ * Calculate position for an opening hand node
+ * Opening hand uses special spacing
+ * @param {number} currentX - Current X
+ * @param {number} currentY - Current Y
+ * @param {number} index - Card index in opening hand
  * @returns {Object} { x, y }
  */
 function calcularPosicaoHandNode(currentX, currentY, index) {
@@ -110,21 +115,21 @@ function calcularPosicaoHandNode(currentX, currentY, index) {
 }
 
 /**
- * Determina o side da conexão baseado em posições relativas
- * @param {Object} fromNode - Nó de origem { x, y }
- * @param {Object} toNode - Nó de destino { x, y }
+ * Determine connection sides based on relative positions
+ * @param {Object} fromNode - Source node { x, y }
+ * @param {Object} toNode - Destination node { x, y }
  * @returns {Object} { fromSide, toSide }
  */
 function determinarSidesConexao(fromNode, toNode) {
   if (toNode.y < fromNode.y) {
-    // Conexão para cima
+    // Upward connection
     return { fromSide: "top", toSide: "bottom" };
   }
   if (toNode.y > fromNode.y) {
-    // Conexão para baixo
+    // Downward connection
     return { fromSide: "bottom", toSide: "top" };
   }
-  // Conexão horizontal
+  // Horizontal connection
   return { fromSide: "right", toSide: "left" };
 }
 

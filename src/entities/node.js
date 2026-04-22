@@ -2,17 +2,17 @@ const { generateUniqueId } = require("../utils/idGenerator");
 const { NODE_DIMENSIONS } = require("../config");
 
 /**
- * Factory para criar nós do canvas
- * Responsabilidade: encapsular estrutura de nó
+ * Factory for creating canvas nodes
+ * Responsibility: encapsulate node structure
  */
 
 /**
- * Cria um novo nó
- * @param {string} name - Nome da carta
- * @param {string} action - Ação/efeito
- * @param {number} x - Posição X
- * @param {number} y - Posição Y
- * @returns {Object} Objeto do nó
+ * Create a new node
+ * @param {string} name - Card name
+ * @param {string} action - Action/effect
+ * @param {number} x - X position
+ * @param {number} y - Y position
+ * @returns {Object} Node object
  */
 function criarNo(name, action, x, y) {
   return {
@@ -27,10 +27,10 @@ function criarNo(name, action, x, y) {
 }
 
 /**
- * Converte um nó interno para nó do canvas com imagem
- * @param {Object} no - Nó interno
- * @param {string} caminhoImagem - Path relativo da imagem
- * @returns {Object} Nó do canvas tipo "file"
+ * Convert internal node to image canvas node
+ * @param {Object} no - Internal node
+ * @param {string} caminhoImagem - Relative image path
+ * @returns {Object} Canvas node of type "file"
  */
 function converterParaNoComImagem(no, caminhoImagem) {
   return {
@@ -45,9 +45,9 @@ function converterParaNoComImagem(no, caminhoImagem) {
 }
 
 /**
- * Converte um nó interno para nó do canvas com texto
- * @param {Object} no - Nó interno
- * @returns {Object} Nó do canvas tipo "text"
+ * Convert internal node to text canvas node
+ * @param {Object} no - Internal node
+ * @returns {Object} Canvas node of type "text"
  */
 function converterParaNoComTexto(no) {
   return {

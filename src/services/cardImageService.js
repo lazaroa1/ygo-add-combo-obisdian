@@ -7,22 +7,22 @@ const {
 } = require("../config");
 
 /**
- * Serviço responsável por gerenciar download e cache de imagens de cartas
- * Responsabilidade única: gerenciar imagens (download, cache, paths)
+ * Service responsible for card image download and caching
+ * Single responsibility: manage images (download, cache, paths)
  */
 
 /**
- * Normaliza o nome de uma carta para um nome de arquivo válido
- * @param {string} cardName - Nome da carta
- * @returns {string} Nome do arquivo normalizado
+ * Normalize a card name into a valid file name
+ * @param {string} cardName - Card name
+ * @returns {string} Normalized file name
  */
 function normalizeCardNameToFilename(cardName) {
   return cardName.replace(/[^a-z0-9]/gi, "_").toLowerCase() + ".jpg";
 }
 
 /**
- * Calcula os paths absoluto e relativo para uma imagem de carta
- * @param {string} cardName - Nome da carta
+ * Calculate absolute and relative paths for a card image
+ * @param {string} cardName - Card name
  * @returns {Object} { absolutePath, relativePath }
  */
 function getCardImagePaths(cardName) {
@@ -36,9 +36,9 @@ function getCardImagePaths(cardName) {
 }
 
 /**
- * Verifica se a imagem já existe em cache
- * @param {string} absolutePath - Path absoluto da imagem
- * @returns {Promise<boolean>} True se arquivo existe
+ * Check whether image already exists in cache
+ * @param {string} absolutePath - Absolute image path
+ * @returns {Promise<boolean>} True if file exists
  */
 async function imagemEmCache(absolutePath) {
   try {
@@ -50,9 +50,9 @@ async function imagemEmCache(absolutePath) {
 }
 
 /**
- * Busca a imagem da API YGOProDeck
- * @param {string} cardName - Nome da carta
- * @returns {Promise<?string>} URL da imagem ou null
+ * Fetch image URL from YGOProDeck API
+ * @param {string} cardName - Card name
+ * @returns {Promise<?string>} Image URL or null
  */
 async function buscarImagemDaAPI(cardName) {
   try {
@@ -78,10 +78,10 @@ async function buscarImagemDaAPI(cardName) {
 }
 
 /**
- * Baixa e salva a imagem da carta
- * @param {string} imageUrl - URL da imagem
- * @param {string} absolutePath - Path onde salvar
- * @returns {Promise<boolean>} True se sucesso
+ * Download and save card image
+ * @param {string} imageUrl - Image URL
+ * @param {string} absolutePath - Path where image is saved
+ * @returns {Promise<boolean>} True on success
  */
 async function baixarESalvarImagem(imageUrl, absolutePath) {
   try {
@@ -99,10 +99,10 @@ async function baixarESalvarImagem(imageUrl, absolutePath) {
 }
 
 /**
- * Busca e retorna o path relativo da imagem de uma carta
- * Verifica cache primeiro, depois faz download se necessário
- * @param {string} cardName - Nome da carta a buscar
- * @returns {Promise<?string>} Path relativo da imagem ou null
+ * Resolve and return relative path for a card image
+ * Checks cache first, then downloads when needed
+ * @param {string} cardName - Card name to fetch
+ * @returns {Promise<?string>} Relative image path or null
  */
 async function obterPathImagemCarta(cardName) {
   const cleanName = cardName.trim();
@@ -110,18 +110,18 @@ async function obterPathImagemCarta(cardName) {
 
   const { absolutePath, relativePath } = getCardImagePaths(cleanName);
 
-  // Verifica se está em cache
+  // Check cache first
   const existeEmCache = await imagemEmCache(absolutePath);
   if (existeEmCache) {
     return relativePath;
   }
 
-  // Busca imagem da API
+  // Fetch image from API
   logger.info(`Baixando imagem: ${cleanName}...`);
   const imageUrl = await buscarImagemDaAPI(cleanName);
   if (!imageUrl) return null;
 
-  // Salva imagem
+  // Save image
   const sucesso = await baixarESalvarImagem(imageUrl, absolutePath);
   return sucesso ? relativePath : null;
 }

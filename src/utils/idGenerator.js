@@ -1,8 +1,8 @@
 const crypto = require("crypto");
 
 /**
- * Gera um ID aleatório hexadecimal único
- * @returns {string} ID hexadecimal de 16 caracteres
+ * Generate a unique random hexadecimal ID
+ * @returns {string} 16-character hexadecimal ID
  */
 function generateUniqueId() {
   return crypto.randomBytes(8).toString("hex");

@@ -2,11 +2,11 @@ const { construirCanvas } = require("./src/services/canvasBuilder");
 const { DIRETORIO_CANVAS } = require("./src/config");
 
 // ============================================
-// ENTRADA PRINCIPAL DA APLICAÇÃO
+// APPLICATION ENTRY POINT
 // ============================================
 
-// Combo de teste: Trickstar
-const comboTrickstar = `
+// Input combo text
+const comboInputText = `
 Start hand -> Trickstar Festival | Trickstar Light Stage | Trickstar Aqua Angel
 Trickstar Festival[ACT EFF]
 Trickstar Holly Angel[SP]
@@ -20,5 +20,5 @@ Trickstar Fusion[ACT EFF]
 Trickstar Band Drumatis[SP] -> Trickstar Colchica[material] + trickstar hoody[material] -> Trickstar Lilybell[search]
 `;
 
-// Executa a geração do canvas
-construirCanvas(comboTrickstar, "Combo_Trickstar.canvas", DIRETORIO_CANVAS);
+// Run canvas generation
+construirCanvas(comboInputText, "Combo_Trickstar.canvas", DIRETORIO_CANVAS);

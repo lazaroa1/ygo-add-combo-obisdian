@@ -1,5 +1,5 @@
 /**
- * Serviço de logging com prefixos consistentes
+ * Logging service with consistent prefixes
  */
 
 const logger = {
