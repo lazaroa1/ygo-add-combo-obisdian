@@ -2,39 +2,64 @@ const fs = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
 
-// --- CONFIGURAÇÕES ---
+// --- CONFIGURAÇÕES DO COFRE (VAULT) ---
+const VAULT_ROOT = "G:/Meu Drive/MyMind";
+const DIRETORIO_CANVAS = path.join(VAULT_ROOT, "Yugioh/Decks/Combos");
 const NOME_ARQUIVO = "Combo_Trickstar.canvas";
-// Diretório onde o arquivo .canvas será salvo e lido
-const DIRETORIO_OBSIDIAN = "G:/Meu Drive/MyMind/Yugioh/Decks/Combos";
+
+const PASTA_ANEXOS_RELATIVA = "Arquivos/Yugioh";
+const DIRETORIO_IMAGENS_ABSOLUTO = path.join(VAULT_ROOT, PASTA_ANEXOS_RELATIVA);
+
+// --- ESPAÇAMENTOS (Ajuste aqui) ---
+const STEP_X_BASE = 400; // Espaço horizontal padrão
+const STEP_X_LARGE = 600; // Espaço horizontal para textos longos (ACT EFF, GY EFF)
+const STEP_Y_BRANCH = 700; // Espaço vertical para ramificações (search, material)
 
 const generateId = () => crypto.randomBytes(8).toString("hex");
 
-// --- FUNÇÃO DE BUSCA DE URL (Sem Download) ---
-async function getCardImageUrl(cardName) {
+// --- FUNÇÃO DE DOWNLOAD ---
+async function fetchAndSaveCardImage(cardName) {
   const cleanName = cardName.trim();
   if (!cleanName) return null;
 
-  console.log(`Buscando URL na API: ${cleanName}...`);
-  try {
-    const res = await fetch(
-      `https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(cleanName)}`,
-    );
+  const fileName = `${cleanName.replace(/[^a-z0-9]/gi, "_")}.jpg`;
+  const absolutePath = path.join(DIRETORIO_IMAGENS_ABSOLUTO, fileName);
 
-    if (!res.ok) {
-      console.error(
-        `[ERRO] Carta não encontrada: "${cleanName}". Verifique a grafia.`,
+  const relativePath = PASTA_ANEXOS_RELATIVA
+    ? `${PASTA_ANEXOS_RELATIVA}/${fileName}`
+    : fileName;
+
+  try {
+    await fs.access(absolutePath);
+    return relativePath;
+  } catch {
+    console.log(`Baixando e salvando imagem: ${cleanName}...`);
+    try {
+      const res = await fetch(
+        `https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(cleanName)}`,
       );
+
+      if (!res.ok) {
+        console.error(`[ERRO] Carta não encontrada: "${cleanName}".`);
+        return null;
+      }
+
+      const data = await res.json();
+
+      if (data.data && data.data.length > 0) {
+        const imgUrl = data.data[0].card_images[0].image_url;
+        const imgRes = await fetch(imgUrl);
+        const buffer = await imgRes.arrayBuffer();
+
+        await fs.mkdir(DIRETORIO_IMAGENS_ABSOLUTO, { recursive: true });
+        await fs.writeFile(absolutePath, Buffer.from(buffer));
+
+        return relativePath;
+      }
+    } catch (error) {
+      console.error(`[ERRO FATAL] Falha de conexão ao searchr: ${cleanName}`);
       return null;
     }
-
-    const data = await res.json();
-
-    if (data.data && data.data.length > 0) {
-      return data.data[0].card_images[0].image_url;
-    }
-  } catch (error) {
-    console.error(`[ERRO FATAL] Falha de conexão ao buscar: ${cleanName}`);
-    return null;
   }
   return null;
 }
@@ -46,8 +71,6 @@ async function buildCanvas(inputText, outputName, vaultDir) {
   const edges = [];
   const regexNode = /([^\[\-\>\|]+)(?:\[([^\]]+)\])?/g;
 
-  const STEP_X = 350;
-  const STEP_Y = 500;
   let mainX = 0;
   let mainY = 0;
 
@@ -64,11 +87,9 @@ async function buildCanvas(inputText, outputName, vaultDir) {
 
   let globalPreviousNodes = [];
 
-  // 1º LOOP: Processamento do texto e cálculo de coordenadas
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
     const line = lines[lineIndex];
 
-    // Processamento da "Start hand"
     if (line.toLowerCase().startsWith("start hand")) {
       const parts = line.split("->");
       let lastHandNode = null;
@@ -90,9 +111,9 @@ async function buildCanvas(inputText, outputName, vaultDir) {
           };
           nodes.push(newNode);
           lastHandNode = newNode;
-          mainX += 274; // Gruda as cartas da mão
+          mainX += 274;
         }
-        mainX += 150; // Separa a mão inicial do combo principal
+        mainX += 150;
       }
       if (lastHandNode) {
         globalPreviousNodes = [lastHandNode];
@@ -111,7 +132,7 @@ async function buildCanvas(inputText, outputName, vaultDir) {
         .map((e) => e.trim())
         .filter((e) => e);
       const currentNodes = [];
-      const mainNodesForThisStep = []; // Rastreador da linha principal
+      const mainNodesForThisStep = [];
 
       for (let entityIdx = 0; entityIdx < entities.length; entityIdx++) {
         const entityStr = entities[entityIdx];
@@ -120,6 +141,12 @@ async function buildCanvas(inputText, outputName, vaultDir) {
         if (match) {
           const name = match[1].trim();
           const action = (match[2] || "").trim().toLowerCase();
+
+          // Identifica apenas ações que correm no eixo horizontal para alongar o passo
+          const isLargeHorizontal = ["act eff", "gy eff"].some((a) =>
+            action.includes(a),
+          );
+
           let nodeX = mainX;
           let nodeY = mainY;
           let isBranch = false;
@@ -127,25 +154,33 @@ async function buildCanvas(inputText, outputName, vaultDir) {
           if (previousNodes.length > 0) {
             const parent = previousNodes[0];
 
-            if (action.includes("busca") || action.includes("add")) {
+            if (
+              action.includes("search") ||
+              action.includes("add") ||
+              action.includes("busca")
+            ) {
               nodeX = parent.x;
-              nodeY = parent.y - STEP_Y;
+              nodeY = parent.y - STEP_Y_BRANCH;
               isBranch = true;
             } else if (action.includes("material")) {
               const totalMaterials = entities.length;
-              const offset = entityIdx * 300 - (totalMaterials - 1) * 150;
+              // Aumentado levemente o offset de material para evitar sobreposição
+              const offset = entityIdx * 320 - (totalMaterials - 1) * 160;
               nodeX = parent.x + offset;
-              nodeY = parent.y + STEP_Y;
+              nodeY = parent.y + STEP_Y_BRANCH;
               isBranch = true;
             } else {
+              if (isLargeHorizontal) {
+                mainX += STEP_X_LARGE - STEP_X_BASE;
+              }
               nodeX = mainX;
               nodeY = mainY;
-              mainX += STEP_X;
+              mainX += STEP_X_BASE;
             }
           } else if (isFirstStepInLine) {
             nodeX = mainX;
             nodeY = mainY;
-            mainX += STEP_X;
+            mainX += STEP_X_BASE;
           }
 
           const newNode = {
@@ -161,7 +196,6 @@ async function buildCanvas(inputText, outputName, vaultDir) {
           nodes.push(newNode);
           currentNodes.push(newNode);
 
-          // Se não for ramificação (busca/material), marca como carta da linha principal
           if (!isBranch) {
             mainNodesForThisStep.push(newNode);
           }
@@ -189,13 +223,12 @@ async function buildCanvas(inputText, outputName, vaultDir) {
               fromSide: fromSide,
               toNode: curr.id,
               toSide: toSide,
-              label: curr.label || undefined, // Aplica o texto da ação na linha
+              label: curr.label || undefined,
             });
           }
         }
       }
 
-      // Atualiza a origem apenas se novas cartas entraram na linha principal
       if (mainNodesForThisStep.length > 0) {
         previousNodes = mainNodesForThisStep;
       }
@@ -205,15 +238,14 @@ async function buildCanvas(inputText, outputName, vaultDir) {
     globalPreviousNodes = previousNodes;
   }
 
-  // 2º LOOP: Requisições à API e injeção do Markdown no JSON final
   for (const node of nodes) {
-    const imageUrl = await getCardImageUrl(node.name);
+    const imageRelativePath = await fetchAndSaveCardImage(node.name);
 
-    if (imageUrl) {
+    if (imageRelativePath) {
       canvasData.nodes.push({
         id: node.id,
-        type: "text",
-        text: `![${node.name}](${imageUrl})`,
+        type: "file",
+        file: imageRelativePath,
         x: node.x,
         y: node.y,
         width: 274,
@@ -241,17 +273,18 @@ async function buildCanvas(inputText, outputName, vaultDir) {
   console.log(`Canvas gerado/atualizado com sucesso em: ${canvasFilePath}`);
 }
 
-// --- EXECUÇÃO ---
-const inputText = `Start hand -> Trickstar Festival | Trickstar Light Stage | Trickstar Aqua Angel
-Trickstar Festival[ativacao]
+const inputText = `
+Start hand -> Trickstar Festival | Trickstar Light Stage | Trickstar Aqua Angel
+Trickstar Festival[ACT EFF]
 Trickstar Holly Angel[SP]
-Trickstar Light Stage[ativacao] -> Trickstar Candina[busca]
-Trickstar Candina[NS] -> trickstar hoody[busca]
+Trickstar Light Stage[ACT EFF] -> Trickstar Candina[search]
+Trickstar Candina[NS] -> trickstar hoody[search]
 trickstar hoody[SP]
 Trickstar Bloom[SP] -> trickstar hoody[material]
-trickstar hoody[efeito cemiterio] -> Trickstar Fusion[busca]
-Trickstar Colchica -> Trickstar Candina[material]
-Trickstar Fusion[ativacao]
-Trickstar Band Dramatis -> Trickstar Colchica[material] + trickstar hoody[material] -> Trickstar Lilybell[busca]`;
+trickstar hoody[GY EFF] -> Trickstar Fusion[search]
+Trickstar Colchica[SP] -> Trickstar Candina[material]
+Trickstar Fusion[ACT EFF]
+Trickstar Band Drumatis[SP] -> Trickstar Colchica[material] + trickstar hoody[material] -> Trickstar Lilybell[search]
+`;
 
-buildCanvas(inputText, NOME_ARQUIVO, DIRETORIO_OBSIDIAN);
+buildCanvas(inputText, NOME_ARQUIVO, DIRETORIO_CANVAS);
