@@ -174,8 +174,7 @@ Trickstar Band Drumatis[SP] -> Trickstar Colchica[material] + trickstar hoody[ma
 3. `search`/`add` actions create upper branches.
 4. `material` actions create lower branches.
 
-_(Add your generated image here in the repository)_
-![Output Example](path_to_your_image/image_637c60.png)
+<img width="1826" height="609" alt="image" src="https://github.com/user-attachments/assets/1d9b7d44-74eb-417c-be0f-f42e074574e8" />
 
 ## Expected Output
 
