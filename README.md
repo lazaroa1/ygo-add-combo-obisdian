@@ -139,13 +139,13 @@ Bracket content:
 Current routing patterns:
 
 - `[search]`, `[busca]`, `[add]`
-  - Moves upward (negative Y branch), using `LAYOUT_SPACING.verticalBranch`.
+  - Card acquisition actions (for example, adding a card from Deck/GY to hand or to your available plays).
 - `[material]`
-  - Moves downward (positive Y branch), using `LAYOUT_SPACING.verticalBranch`.
+  - Indicates cards being used as summoning material (Fusion, Link, Synchro, etc.).
 - `[act eff]`, `[gy eff]`
-  - Stays on main flow with expanded horizontal step (`largeHorizontal`).
+  - Effect activations: `ACT EFF` for activated effects in play, `GY EFF` for effects that trigger/activate in the Graveyard.
 - `[sp]`, `[ns]`, and labels without keywords
-  - Follow standard main flow (`baseHorizontal`).
+  - Summon/state progression actions: `SP` = Special Summon, `NS` = Normal Summon; unlabeled actions are treated as generic combo progression steps.
 
 ---
 
