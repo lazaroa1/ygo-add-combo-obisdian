@@ -6,19 +6,15 @@ const { DIRETORIO_CANVAS } = require('./src/config');
 // ============================================
 
 // Input combo text
-const comboInputText = `
-Monster
+const comboInputText = `Monster
 1 Witch of the Black Rose
 1 Blue Rose Dragon
 3 White Rose Dragon
-1 Mulcharmy Meowls
 3 Roxrose Dragon
 1 Rose Princess
 3 Red Rose Dragon
 1 Rose Girl
 3 Lonefire Blossom
-1 Ghost Sister & Spooky Dogwood
-2 Ghost Ogre & Snow Rabbit
 1 Rose Lover
 3 Ruddy Rose Witch
 1 Spore
@@ -34,7 +30,6 @@ Spell
 1 Thorn of Malice
 Trap
 1 Blooming of the Darkest Rose
-2 Infinite Impermanence
 Extra
 2 Ruddy Rose Dragon
 1 Black Rose Dragon

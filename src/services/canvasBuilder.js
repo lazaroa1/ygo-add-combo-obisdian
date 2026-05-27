@@ -1,19 +1,20 @@
-const fs = require("fs/promises");
-const path = require("path");
-const logger = require("../utils/logger");
-const { parsearEntradaPrincipal } = require("./mainInputParser");
+const fs = require('fs/promises');
+const path = require('path');
+const logger = require('../utils/logger');
+const { parsearEntradaPrincipal } = require('./mainInputParser');
+const { copiarTextoParaClipboard } = require('./clipboardService');
 const {
   parseaInicialCombo,
   parseaSequenciaCombo,
   ehInicioDoCombo,
-} = require("./comboParser");
-const { obterPathImagemCarta } = require("./cardImageService");
+} = require('./comboParser');
+const { obterPathImagemCarta } = require('./cardImageService');
 const {
   criarNo,
   converterParaNoComImagem,
   converterParaNoComTexto,
-} = require("../entities/node");
-const { criarConexoesEntreListas } = require("../entities/edge");
+} = require('../entities/node');
+const { criarConexoesEntreListas } = require('../entities/edge');
 const {
   identificaTipoDeBranch,
   calcularPosicaoSearchNode,
@@ -22,7 +23,7 @@ const {
   calcularPosicaoHandNode,
   determinarSidesConexao,
   LAYOUT_SPACING,
-} = require("../entities/layoutEngine");
+} = require('../entities/layoutEngine');
 
 /**
  * Canvas builder - orchestrates the full generation process
@@ -36,7 +37,7 @@ const {
  */
 async function carregarCanvasExistente(caminhoArquivo) {
   try {
-    const conteudo = await fs.readFile(caminhoArquivo, "utf8");
+    const conteudo = await fs.readFile(caminhoArquivo, 'utf8');
     return JSON.parse(conteudo);
   } catch {
     return { nodes: [], edges: [] };
@@ -117,11 +118,11 @@ function processarLinhaCombo(etapasDaLinha, nosGlobaisAnteriores, posX, posY) {
       if (previousNodes.length > 0) {
         const pai = previousNodes[0];
 
-        if (isBranch && branchType === "search") {
+        if (isBranch && branchType === 'search') {
           const { x, y } = calcularPosicaoSearchNode(pai);
           novoNo = criarNo(name, action, x, y);
           branchAtual = true;
-        } else if (isBranch && branchType === "material") {
+        } else if (isBranch && branchType === 'material') {
           const { x, y } = calcularPosicaoMaterialNode(pai, idx, etapa.length);
           novoNo = criarNo(name, action, x, y);
           branchAtual = true;
@@ -217,15 +218,18 @@ async function construirCanvas(textoEntrada, nomeArquivo, diretorioDestino) {
     const yInicial = calcularYInicial(canvasExistente);
 
     // 2. Parse input via strategy/factory entrypoint
-    const parseResult = parsearEntradaPrincipal(textoEntrada);
+    const parseResult = await parsearEntradaPrincipal(textoEntrada);
 
-    if (parseResult.parserType === "decklist") {
-      logger.info("Decklist parsing selected (temporary response mode).");
+    if (parseResult.parserType === 'decklist') {
+      await copiarTextoParaClipboard(parseResult.output || '');
+      logger.info('Decklist parsing selected. Output copied to clipboard.');
       return parseResult.output;
     }
 
-    if (parseResult.parserType !== "comboGraph") {
-      throw new Error(`Unsupported parser type for canvas build: ${parseResult.parserType}`);
+    if (parseResult.parserType !== 'comboGraph') {
+      throw new Error(
+        `Unsupported parser type for canvas build: ${parseResult.parserType}`,
+      );
     }
 
     const linhas = parseResult.lines;

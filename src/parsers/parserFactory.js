@@ -49,7 +49,7 @@ class ParserFactory {
    * @param {string} inputText - Raw input
    * @returns {Object|string}
    */
-  parse(inputText) {
+  async parse(inputText) {
     const strategy = this.resolve(inputText);
     return strategy.parse(inputText);
   }
