@@ -100,7 +100,7 @@ node index.js
 In `index.js`, the input combo text is defined in the `comboInputText` string and generation is triggered by:
 
 ```javascript
-construirCanvas(comboInputText, "Combo_Trickstar.canvas", DIRETORIO_CANVAS);
+construirCanvas(comboInputText, 'Combo_Trickstar.canvas', DIRETORIO_CANVAS);
 ```
 
 ## DSL Guide
@@ -144,6 +144,14 @@ Current routing patterns:
   - Indicates cards being used as summoning material (Fusion, Link, Synchro, etc.).
 - `[act eff]`, `[gy eff]`
   - Effect activations: `ACT EFF` for activated effects in play, `GY EFF` for effects that trigger/activate in the Graveyard.
+- `[send gy]`
+  - sends the card (from hand or deck) to the Graveyard
+- `[sp gy]`
+  - the card performs a Special Summon from the Graveyard to the field
+- `[hand eff]`
+  - activates the card effect in hand
+- `[banish]`
+  - banishes the card
 - `[sp]`, `[ns]`, and labels without keywords
   - Summon/state progression actions: `SP` = Special Summon, `NS` = Normal Summon; unlabeled actions are treated as generic combo progression steps.
 
