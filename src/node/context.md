@@ -1,13 +1,48 @@
 ## Overview
 
-This folder is reserved to document the node domain boundary in the architecture. In the current codebase, node creation logic is implemented in `src/entities/node.js`, and this context file clarifies that mapping.
+This folder documents the parser entry architecture that feeds the node and canvas pipeline. The system now uses a Strategy pattern to support two input families through one entrypoint:
 
-## Key Components
+- `comboGraphParserStrategy`: parses combo flow syntax and returns graph-ready data.
+- `decklistParserStrategy`: parses decklist sections and returns structured card attributes for clipboard output.
 
-- Current implementation location: `src/entities/node.js` is the active node factory module.
-- Node responsibility: generate internal node models with stable IDs, card/action metadata, and spatial dimensions.
-- Canvas conversion responsibility: map internal nodes into output node formats (image file nodes or fallback text nodes).
-- Integration flow: `canvasBuilder` creates nodes through the node factory and then delegates image resolution to `cardImageService` before writing canvas JSON.
+## Parsing Strategy Design Pattern
+
+The parsing flow is organized around `ParserFactory`, which receives a prioritized list of strategy objects. Each strategy must implement two methods:
+
+- `canHandle(inputText)`: checks whether the strategy supports the input format.
+- `parse(inputText)`: returns normalized output for the selected mode.
+
+This pattern keeps parsing rules isolated, avoids conditional sprawl in the main service, and allows new modes to be added with minimal changes.
+
+## Entrypoint Selection Flow
+
+`parsearEntradaPrincipal` delegates to `parserFactory.parse(inputText)`. The factory resolves the first strategy where `canHandle` returns `true`.
+
+Resolution behavior:
+
+- If the input contains combo markers such as `Start hand ->` or `->`, `comboGraphParserStrategy` is selected.
+- If the input contains deck sections (`monster`, `spell`, `trap`, `extra`, `side`) followed by quantity rows, `decklistParserStrategy` is selected.
+
+The selected result is then consumed by `canvasBuilder`:
+
+- `comboGraph` output continues through node creation, layout, and canvas persistence.
+- `decklist` output bypasses canvas generation and is copied to clipboard.
+
+## Example
+
+```javascript
+const parseResult = await parsearEntradaPrincipal(inputText); // Resolve strategy using content
+
+if (parseResult.parserType === 'comboGraph') {
+  // Continue node and edge creation for canvas mode
+  await construirFluxoCanvas(parseResult.lines);
+}
+
+if (parseResult.parserType === 'decklist') {
+  // Forward structured text to clipboard mode
+  await copiarTextoParaClipboard(parseResult.output);
+}
+```
 
 ## Architectural Rules
 
