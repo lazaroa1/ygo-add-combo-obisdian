@@ -1,6 +1,7 @@
 const fs = require("fs/promises");
 const path = require("path");
 const logger = require("../utils/logger");
+const { parsearEntradaPrincipal } = require("./mainInputParser");
 const {
   parseaInicialCombo,
   parseaSequenciaCombo,
@@ -215,11 +216,19 @@ async function construirCanvas(textoEntrada, nomeArquivo, diretorioDestino) {
     const canvasExistente = await carregarCanvasExistente(caminhoArquivo);
     const yInicial = calcularYInicial(canvasExistente);
 
-    // 2. Parse lines
-    const linhas = textoEntrada
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line);
+    // 2. Parse input via strategy/factory entrypoint
+    const parseResult = parsearEntradaPrincipal(textoEntrada);
+
+    if (parseResult.parserType === "decklist") {
+      logger.info("Decklist parsing selected (temporary response mode).");
+      return parseResult.output;
+    }
+
+    if (parseResult.parserType !== "comboGraph") {
+      throw new Error(`Unsupported parser type for canvas build: ${parseResult.parserType}`);
+    }
+
+    const linhas = parseResult.lines;
 
     // 3. Process lines while keeping shared global state
     const todosOs = [];
