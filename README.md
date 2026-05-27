@@ -5,9 +5,37 @@ Node.js script that converts structured text (DSL) into Yu-Gi-Oh! combo diagrams
 ## Features
 
 - Direct text syntax parser into a directed graph.
+- Automatic mode selection between Combo Canvas generation and Decklist data extraction.
 - Auto-layout with action-based routing (search goes up, material goes down, etc.).
 - YGOPRODeck API integration for card image downloads.
 - Native Obsidian Canvas output (`type: "file"` nodes), usable offline after initial downloads.
+- Decklist structured output copied directly to clipboard (no `.txt` artifact).
+
+## New Feature: Decklist Data Extractor
+
+The script now automatically detects when the input is a decklist block (for example: `Monster`, `Spell`, `Trap`, `Extra`, `Side`) with numbered card lines.
+
+When decklist mode is selected, the parser:
+
+- Preserves category separators in the output text.
+- Extracts `qtd_card` from each row (example: `2 Crossrose Dragon` -> `qtd_card: 2`).
+- Fetches card attributes from YGOPRODeck API and applies local fallback values when fields are missing.
+- Builds a structured block with:
+  - `id`
+  - `name`
+  - `typeline`
+  - `type`
+  - `desc`
+  - `race`
+  - `atk`
+  - `def`
+  - `level`
+  - `attribute`
+
+Important behavior:
+
+- Decklist mode does **not** generate a file.
+- The formatted result is automatically copied to the system clipboard, ready for `Ctrl + V`.
 
 ## Installation
 
@@ -183,6 +211,58 @@ Trickstar Band Drumatis[SP] -> Trickstar Colchica[material] + trickstar hoody[ma
 4. `material` actions create lower branches.
 
 <img width="1826" height="609" alt="image" src="https://github.com/user-attachments/assets/1d9b7d44-74eb-417c-be0f-f42e074574e8" />
+
+## Decklist Usage (Input -> Clipboard Output)
+
+### Decklist Input Example
+
+```text
+Monster
+1 Witch of the Black Rose
+Spell
+1 Terraforming
+```
+
+### Pasted Output Example (Clipboard)
+
+```text
+[Monster]
+qtd_card: 1
+id: 73544866
+name: Witch of the Black Rose
+typeline: Spellcaster / Tuner / Effect
+type: Effect Monster
+desc: If this card is Normal or Special Summoned: You can send 1 "Black Rose Dragon" from your Extra Deck to the GY. You can banish this card from your GY, then target 1 "Black Rose Dragon" in your GY; Special Summon it.
+race: Spellcaster
+atk: 1700
+def: 800
+level: 4
+attribute: DARK
+
+[Spell]
+qtd_card: 1
+id: 73628505
+name: Terraforming
+typeline:
+type: Spell Card
+desc: Add 1 Field Spell from your Deck to your hand.
+race: Normal
+atk:
+def:
+level:
+attribute:
+```
+
+> Note: category lines are preserved as visual separators in the final output. For cards without certain attributes (for example Spell/Trap cards), missing fields are returned as empty values.
+
+## Architecture: Script Modes
+
+The parser uses a strategy factory with automatic mode detection:
+
+- If input contains `Start hand ->` or flow chains with `->`: activates **Combo mode** (Canvas generation).
+- If input contains decklist categories (`Monster`, `Spell`, `Trap`, `Extra`, `Side`) with numbered rows: activates **Decklist mode** (attribute extraction + clipboard copy).
+
+This allows a single entrypoint to process both workflows without manual mode switching.
 
 ## Expected Output
 
