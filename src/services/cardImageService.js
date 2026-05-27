@@ -1,10 +1,10 @@
-const fs = require("fs/promises");
-const path = require("path");
-const logger = require("../utils/logger");
+const fs = require('fs/promises');
+const path = require('path');
+const logger = require('../utils/logger');
 const {
   DIRETORIO_IMAGENS_ABSOLUTO,
   PASTA_ANEXOS_RELATIVA,
-} = require("../config");
+} = require('../config');
 
 /**
  * Service responsible for card image download and caching
@@ -17,7 +17,7 @@ const {
  * @returns {string} Normalized file name
  */
 function normalizeCardNameToFilename(cardName) {
-  return cardName.replace(/[^a-z0-9]/gi, "_").toLowerCase() + ".jpg";
+  return cardName.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.jpg';
 }
 
 /**
@@ -57,15 +57,19 @@ async function imagemEmCache(absolutePath) {
 async function buscarImagemDaAPI(cardName) {
   try {
     const response = await fetch(
-      `https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(cardName)}`,
+      `https://db.ygoprodeck.com/api/v7/cardinfo.php?name=${encodeURIComponent(cardName)}`,
     );
 
     if (!response.ok) {
-      logger.error(`Carta não encontrada: "${cardName}".`);
+      const errorBody = await response.text();
+      logger.error(
+        `Falha ao buscar "${cardName}" na API (status ${response.status}): ${errorBody}`,
+      );
       return null;
     }
 
     const data = await response.json();
+
     if (data.data && data.data.length > 0) {
       return data.data[0].card_images[0].image_url;
     }
