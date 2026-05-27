@@ -1,9 +1,19 @@
-const { PATTERNS } = require("../config");
+const { PATTERNS } = require('../config');
 
 /**
  * Combo parser for text format
  * Responsibility: extract structured information from combo input
  */
+
+/**
+ * Normalize action tags to internal canonical format.
+ * Example: "Act   Eff" -> "act eff"
+ * @param {string} action - Raw action text
+ * @returns {string} Normalized action
+ */
+function normalizarAcao(action) {
+  return (action || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
 
 /**
  * Extract card name and action from an entity string
@@ -19,7 +29,7 @@ function extrairNomeEAcao(entityStr) {
   }
 
   const name = match[1].trim();
-  const action = (match[2] || "").trim().toLowerCase();
+  const action = normalizarAcao(match[2]);
 
   return { name, action };
 }
@@ -44,20 +54,20 @@ function extrairEntidades(step) {
  * @returns {Array<Object>} Array with [ { name, action } ]
  */
 function parseaInicialCombo(line) {
-  const partes = line.split("->");
+  const conteudoSemCabecalho = line.replace(/^\s*start\s+hand\s*->\s*/i, '');
 
-  if (partes.length <= 1) {
+  if (!conteudoSemCabecalho) {
     return [];
   }
 
-  const entidades = partes[1]
-    .split("|")
+  const entidades = conteudoSemCabecalho
+    .split('|')
     .map((e) => e.trim())
     .filter((e) => e);
 
   return entidades.map((entity) => {
     const { name } = extrairNomeEAcao(entity);
-    return { name, action: "" };
+    return { name, action: '' };
   });
 }
 
@@ -68,7 +78,7 @@ function parseaInicialCombo(line) {
  * @returns {Array<Array<Object>>} Array of steps, each containing { name, action }
  */
 function parseaSequenciaCombo(line) {
-  const etapas = line.split("->").map((s) => s.trim());
+  const etapas = line.split('->').map((s) => s.trim());
   const sequencia = [];
 
   for (const etapa of etapas) {
@@ -105,7 +115,7 @@ function ehInicioDoCombo(line) {
  */
 function parseaComboCompleto(inputText) {
   const linhas = inputText
-    .split("\n")
+    .split('\n')
     .map((line) => line.trim())
     .filter((line) => line);
 

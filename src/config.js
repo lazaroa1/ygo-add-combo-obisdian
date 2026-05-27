@@ -45,7 +45,7 @@ const BRANCH_ACTION_PATTERNS = {
 
 // Parsing patterns
 const PATTERNS = {
-  handStart: /^start hand/i,
+  handStart: /^\s*start\s+hand\s*->/i,
   entityExtractor: /([^\[\-\>\|]+)(?:\[([^\]]+)\])?/g,
   actions: /[\+\|\-]/,
 };
