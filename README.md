@@ -168,10 +168,16 @@ Current routing patterns:
 
 - `[search]`, `[busca]`, `[add]`
   - Card acquisition actions (for example, adding a card from Deck/GY to hand or to your available plays).
+- `[deck top]`
+  - Moves or places a card on the top of the Deck (for setup or stack manipulation).
 - `[material]`
   - Indicates cards being used as summoning material (Fusion, Link, Synchro, etc.).
 - `[act eff]`, `[gy eff]`
   - Effect activations: `ACT EFF` for activated effects in play, `GY EFF` for effects that trigger/activate in the Graveyard.
+- `[enemy turn]`
+  - Marks an action that happens during the opponent's turn (for example, interruption, negation, or reactive summons).
+- `[next turno]`
+  - Marks combo continuation planned for the next turn instead of the current turn sequence.
 - `[send gy]`
   - sends the card (from hand or deck) to the Graveyard
 - `[sp gy]`

@@ -35,19 +35,28 @@ const LAYOUT_SPACING = {
 };
 
 // Actions that change horizontal layout spacing
-const LARGE_HORIZONTAL_ACTIONS = ['act eff', 'gy eff', 'sp gy', 'hand eff'];
+const LARGE_HORIZONTAL_ACTIONS = [
+  'act eff',
+  'gy eff',
+  'sp gy',
+  'hand eff',
+  'enemy turn',
+  'next turno',
+];
 
 // Actions that create branches (do not follow linear flow)
 const BRANCH_ACTION_PATTERNS = {
-  search: ['search', 'add', 'busca'],
+  search: ['search', 'add', 'busca', 'deck top'],
   material: ['material', 'send gy', 'banish'],
 };
 
 // Parsing patterns
 const PATTERNS = {
   handStart: /^\s*start\s+hand\s*->/i,
-  entityExtractor: /([^\[\-\>\|]+)(?:\[([^\]]+)\])?/g,
-  actions: /[\+\|\-]/,
+  entityExtractor: /^(.*?)\s*(?:\[([^\]]+)\])?\s*$/,
+  actions: /[\+\|]/,
+  // Trailing action keywords that may appear without brackets (e.g. "Card Name ataca")
+  nonBracketActionSuffix: /\s+(ataca|attacks)$/i,
 };
 
 module.exports = {

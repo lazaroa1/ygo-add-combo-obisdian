@@ -21,22 +21,31 @@ function normalizarAcao(action) {
  * @returns {Object} { name, action }
  */
 function extrairNomeEAcao(entityStr) {
-  const match = PATTERNS.entityExtractor.exec(entityStr);
-  PATTERNS.entityExtractor.lastIndex = 0;
+  const normalizedEntity = (entityStr || '').trim();
+  const match = normalizedEntity.match(PATTERNS.entityExtractor);
 
   if (!match) {
     return { name: null, action: null };
   }
 
-  const name = match[1].trim();
-  const action = normalizarAcao(match[2]);
+  let name = match[1].trim();
+  let action = normalizarAcao(match[2]);
+
+  // Handle action keywords appended directly to the card name without brackets
+  if (!action) {
+    const suffixMatch = name.match(PATTERNS.nonBracketActionSuffix);
+    if (suffixMatch) {
+      action = normalizarAcao(suffixMatch[1]);
+      name = name.slice(0, -suffixMatch[0].length).trim();
+    }
+  }
 
   return { name, action };
 }
 
 /**
  * Extract entity (card) list from a string
- * Supports separators: +, |, -
+ * Supports separators: +, |
  * @param {string} step - String containing separated entities
  * @returns {Array<string>} List of entity strings
  */
