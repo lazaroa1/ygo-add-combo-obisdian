@@ -6,10 +6,10 @@ const path = require('path');
  */
 
 // Obsidian Vault paths
-const VAULT_ROOT = 'G:/Meu Drive/MyMind';
+const VAULT_ROOT = '';
 const VAULT_SUBDIRS = {
-  combos: 'Yugioh/Decks/Combos',
-  images: 'Arquivos/Yugioh',
+  combos: '',
+  images: '',
 };
 
 const DIRETORIO_CANVAS = path.join(VAULT_ROOT, VAULT_SUBDIRS.combos);
