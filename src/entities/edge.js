@@ -1,4 +1,5 @@
 const { generateUniqueId } = require("../utils/idGenerator");
+const { determinarSidesConexao } = require("./layoutEngine");
 
 /**
  * Factory for creating connections/edges between nodes
@@ -22,8 +23,9 @@ function criarConexao(nodeOrigem, nodeDestino, sideDe, sidePara) {
     toSide: sidePara,
   };
 
-  // Add label only when present
-  if (nodeDestino.label) {
+  // Add label only when present, but avoid label on edge when destination is a pure text box (like [enemy turn])
+  const isDestinoPureTextBox = !nodeDestino.name && Boolean(nodeDestino.label);
+  if (nodeDestino.label && !isDestinoPureTextBox) {
     conexao.label = nodeDestino.label;
   }
 
@@ -34,14 +36,18 @@ function criarConexao(nodeOrigem, nodeDestino, sideDe, sidePara) {
  * Create multiple connections between two node groups
  * @param {Array<Object>} nodosOrigem - Source node array
  * @param {Array<Object>} nodosDestino - Destination node array
- * @param {Object} sides - { fromSide, toSide }
+ * @param {Object} [overrideSides] - Optional override { fromSide, toSide }
  * @returns {Array<Object>} Array of created edges
  */
-function criarConexoesEntreListas(nodosOrigem, nodosDestino, sides) {
+function criarConexoesEntreListas(nodosOrigem, nodosDestino, overrideSides = null) {
   const conexoes = [];
 
   for (const origem of nodosOrigem) {
     for (const destino of nodosDestino) {
+      if (origem.id === destino.id) {
+        continue;
+      }
+      const sides = overrideSides || determinarSidesConexao(origem, destino);
       conexoes.push(
         criarConexao(origem, destino, sides.fromSide, sides.toSide),
       );

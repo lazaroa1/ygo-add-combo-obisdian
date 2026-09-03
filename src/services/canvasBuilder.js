@@ -105,9 +105,26 @@ function processarLinhaCombo(etapasDaLinha, nosGlobaisAnteriores, posX, posY) {
   let isFirstStepInLine = previousNodes.length === 0;
   let currentX = posX;
 
-  for (const etapa of etapasDaLinha) {
+  for (let stepIdx = 0; stepIdx < etapasDaLinha.length; stepIdx++) {
+    const etapa = etapasDaLinha[stepIdx];
     const nosNaEtapa = [];
     const nosPrincipaisDaEtapa = [];
+
+    // Check if step 0 is referencing the same card already at previousNodes[0]
+    const isSameAsPrevious =
+      stepIdx === 0 &&
+      etapa.length === 1 &&
+      previousNodes.length === 1 &&
+      Boolean(previousNodes[0].name) &&
+      Boolean(etapa[0].name) &&
+      previousNodes[0].name.trim().toLowerCase() === etapa[0].name.trim().toLowerCase();
+
+    if (isSameAsPrevious) {
+      nosNaEtapa.push(previousNodes[0]);
+      nosPrincipaisDaEtapa.push(previousNodes[0]);
+      isFirstStepInLine = false;
+      continue;
+    }
 
     for (let idx = 0; idx < etapa.length; idx++) {
       const { name, action } = etapa[idx];
@@ -158,12 +175,10 @@ function processarLinhaCombo(etapasDaLinha, nosGlobaisAnteriores, posX, posY) {
     }
 
     // Create connections between previous and current nodes
-    if (previousNodes.length > 0 && nosNaEtapa.length > 0) {
-      const sides = determinarSidesConexao(previousNodes[0], nosNaEtapa[0]);
+    if (!isSameAsPrevious && previousNodes.length > 0 && nosNaEtapa.length > 0) {
       const conexoes = criarConexoesEntreListas(
         previousNodes,
         nosNaEtapa,
-        sides,
       );
       todasConexoes.push(...conexoes);
     }

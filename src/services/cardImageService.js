@@ -12,12 +12,27 @@ const {
  */
 
 /**
+ * Remove parser/action artifacts from card names before image lookup.
+ * Handles trailing tags like "[banish]" and suffixes like "attacks".
+ * @param {string} cardName - Raw card name
+ * @returns {string} Sanitized card name
+ */
+function sanitizeCardNameForLookup(cardName) {
+  return (cardName || '')
+    .trim()
+    .replace(/(?:\s*\[[^\]]+\]\s*)+$/g, '')
+    .replace(/\s+(ataca|attacks)$/i, '')
+    .trim();
+}
+
+/**
  * Normalize a card name into a valid file name
  * @param {string} cardName - Card name
  * @returns {string} Normalized file name
  */
 function normalizeCardNameToFilename(cardName) {
-  return cardName.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.jpg';
+  const sanitizedName = sanitizeCardNameForLookup(cardName);
+  return sanitizedName.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.jpg';
 }
 
 /**
@@ -109,7 +124,7 @@ async function baixarESalvarImagem(imageUrl, absolutePath) {
  * @returns {Promise<?string>} Relative image path or null
  */
 async function obterPathImagemCarta(cardName) {
-  const cleanName = cardName.trim();
+  const cleanName = sanitizeCardNameForLookup(cardName);
   if (!cleanName) return null;
 
   const { absolutePath, relativePath } = getCardImagePaths(cleanName);
