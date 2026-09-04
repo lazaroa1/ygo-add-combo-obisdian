@@ -53,7 +53,7 @@ function converterParaNoComTexto(no) {
   return {
     id: no.id,
     type: "text",
-    text: no.name,
+    text: no.name || no.label || "",
     x: no.x,
     y: no.y,
     width: NODE_DIMENSIONS.textWidth,

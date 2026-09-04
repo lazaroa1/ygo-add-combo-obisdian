@@ -1,4 +1,4 @@
-const { PATTERNS } = require("../config");
+const { PATTERNS } = require('../config');
 
 /**
  * Combo parser for text format
@@ -6,27 +6,46 @@ const { PATTERNS } = require("../config");
  */
 
 /**
+ * Normalize action tags to internal canonical format.
+ * Example: "Act   Eff" -> "act eff"
+ * @param {string} action - Raw action text
+ * @returns {string} Normalized action
+ */
+function normalizarAcao(action) {
+  return (action || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+/**
  * Extract card name and action from an entity string
  * @param {string} entityStr - String containing "name[action]"
  * @returns {Object} { name, action }
  */
 function extrairNomeEAcao(entityStr) {
-  const match = PATTERNS.entityExtractor.exec(entityStr);
-  PATTERNS.entityExtractor.lastIndex = 0;
+  const normalizedEntity = (entityStr || '').trim();
+  const match = normalizedEntity.match(PATTERNS.entityExtractor);
 
   if (!match) {
     return { name: null, action: null };
   }
 
-  const name = match[1].trim();
-  const action = (match[2] || "").trim().toLowerCase();
+  let name = match[1].trim();
+  let action = normalizarAcao(match[2]);
+
+  // Handle action keywords appended directly to the card name without brackets
+  if (!action) {
+    const suffixMatch = name.match(PATTERNS.nonBracketActionSuffix);
+    if (suffixMatch) {
+      action = normalizarAcao(suffixMatch[1]);
+      name = name.slice(0, -suffixMatch[0].length).trim();
+    }
+  }
 
   return { name, action };
 }
 
 /**
  * Extract entity (card) list from a string
- * Supports separators: +, |, -
+ * Supports separators: +, |
  * @param {string} step - String containing separated entities
  * @returns {Array<string>} List of entity strings
  */
@@ -44,20 +63,20 @@ function extrairEntidades(step) {
  * @returns {Array<Object>} Array with [ { name, action } ]
  */
 function parseaInicialCombo(line) {
-  const partes = line.split("->");
+  const conteudoSemCabecalho = line.replace(/^\s*start\s+hand\s*->\s*/i, '');
 
-  if (partes.length <= 1) {
+  if (!conteudoSemCabecalho) {
     return [];
   }
 
-  const entidades = partes[1]
-    .split("|")
+  const entidades = conteudoSemCabecalho
+    .split('|')
     .map((e) => e.trim())
     .filter((e) => e);
 
   return entidades.map((entity) => {
     const { name } = extrairNomeEAcao(entity);
-    return { name, action: "" };
+    return { name, action: '' };
   });
 }
 
@@ -68,7 +87,7 @@ function parseaInicialCombo(line) {
  * @returns {Array<Array<Object>>} Array of steps, each containing { name, action }
  */
 function parseaSequenciaCombo(line) {
-  const etapas = line.split("->").map((s) => s.trim());
+  const etapas = line.split('->').map((s) => s.trim());
   const sequencia = [];
 
   for (const etapa of etapas) {
@@ -105,7 +124,7 @@ function ehInicioDoCombo(line) {
  */
 function parseaComboCompleto(inputText) {
   const linhas = inputText
-    .split("\n")
+    .split('\n')
     .map((line) => line.trim())
     .filter((line) => line);
 

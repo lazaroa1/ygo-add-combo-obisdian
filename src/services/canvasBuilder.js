@@ -1,18 +1,20 @@
-const fs = require("fs/promises");
-const path = require("path");
-const logger = require("../utils/logger");
+const fs = require('fs/promises');
+const path = require('path');
+const logger = require('../utils/logger');
+const { parsearEntradaPrincipal } = require('./mainInputParser');
+const { copiarTextoParaClipboard } = require('./clipboardService');
 const {
   parseaInicialCombo,
   parseaSequenciaCombo,
   ehInicioDoCombo,
-} = require("./comboParser");
-const { obterPathImagemCarta } = require("./cardImageService");
+} = require('./comboParser');
+const { obterPathImagemCarta } = require('./cardImageService');
 const {
   criarNo,
   converterParaNoComImagem,
   converterParaNoComTexto,
-} = require("../entities/node");
-const { criarConexoesEntreListas } = require("../entities/edge");
+} = require('../entities/node');
+const { criarConexoesEntreListas } = require('../entities/edge');
 const {
   identificaTipoDeBranch,
   calcularPosicaoSearchNode,
@@ -21,7 +23,7 @@ const {
   calcularPosicaoHandNode,
   determinarSidesConexao,
   LAYOUT_SPACING,
-} = require("../entities/layoutEngine");
+} = require('../entities/layoutEngine');
 
 /**
  * Canvas builder - orchestrates the full generation process
@@ -35,7 +37,7 @@ const {
  */
 async function carregarCanvasExistente(caminhoArquivo) {
   try {
-    const conteudo = await fs.readFile(caminhoArquivo, "utf8");
+    const conteudo = await fs.readFile(caminhoArquivo, 'utf8');
     return JSON.parse(conteudo);
   } catch {
     return { nodes: [], edges: [] };
@@ -103,9 +105,26 @@ function processarLinhaCombo(etapasDaLinha, nosGlobaisAnteriores, posX, posY) {
   let isFirstStepInLine = previousNodes.length === 0;
   let currentX = posX;
 
-  for (const etapa of etapasDaLinha) {
+  for (let stepIdx = 0; stepIdx < etapasDaLinha.length; stepIdx++) {
+    const etapa = etapasDaLinha[stepIdx];
     const nosNaEtapa = [];
     const nosPrincipaisDaEtapa = [];
+
+    // Check if step 0 is referencing the same card already at previousNodes[0]
+    const isSameAsPrevious =
+      stepIdx === 0 &&
+      etapa.length === 1 &&
+      previousNodes.length === 1 &&
+      Boolean(previousNodes[0].name) &&
+      Boolean(etapa[0].name) &&
+      previousNodes[0].name.trim().toLowerCase() === etapa[0].name.trim().toLowerCase();
+
+    if (isSameAsPrevious) {
+      nosNaEtapa.push(previousNodes[0]);
+      nosPrincipaisDaEtapa.push(previousNodes[0]);
+      isFirstStepInLine = false;
+      continue;
+    }
 
     for (let idx = 0; idx < etapa.length; idx++) {
       const { name, action } = etapa[idx];
@@ -116,11 +135,11 @@ function processarLinhaCombo(etapasDaLinha, nosGlobaisAnteriores, posX, posY) {
       if (previousNodes.length > 0) {
         const pai = previousNodes[0];
 
-        if (isBranch && branchType === "search") {
+        if (isBranch && branchType === 'search') {
           const { x, y } = calcularPosicaoSearchNode(pai);
           novoNo = criarNo(name, action, x, y);
           branchAtual = true;
-        } else if (isBranch && branchType === "material") {
+        } else if (isBranch && branchType === 'material') {
           const { x, y } = calcularPosicaoMaterialNode(pai, idx, etapa.length);
           novoNo = criarNo(name, action, x, y);
           branchAtual = true;
@@ -156,12 +175,10 @@ function processarLinhaCombo(etapasDaLinha, nosGlobaisAnteriores, posX, posY) {
     }
 
     // Create connections between previous and current nodes
-    if (previousNodes.length > 0 && nosNaEtapa.length > 0) {
-      const sides = determinarSidesConexao(previousNodes[0], nosNaEtapa[0]);
+    if (!isSameAsPrevious && previousNodes.length > 0 && nosNaEtapa.length > 0) {
       const conexoes = criarConexoesEntreListas(
         previousNodes,
         nosNaEtapa,
-        sides,
       );
       todasConexoes.push(...conexoes);
     }
@@ -215,11 +232,22 @@ async function construirCanvas(textoEntrada, nomeArquivo, diretorioDestino) {
     const canvasExistente = await carregarCanvasExistente(caminhoArquivo);
     const yInicial = calcularYInicial(canvasExistente);
 
-    // 2. Parse lines
-    const linhas = textoEntrada
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line);
+    // 2. Parse input via strategy/factory entrypoint
+    const parseResult = await parsearEntradaPrincipal(textoEntrada);
+
+    if (parseResult.parserType === 'decklist') {
+      await copiarTextoParaClipboard(parseResult.output || '');
+      logger.info('Decklist parsing selected. Output copied to clipboard.');
+      return parseResult.output;
+    }
+
+    if (parseResult.parserType !== 'comboGraph') {
+      throw new Error(
+        `Unsupported parser type for canvas build: ${parseResult.parserType}`,
+      );
+    }
+
+    const linhas = parseResult.lines;
 
     // 3. Process lines while keeping shared global state
     const todosOs = [];
